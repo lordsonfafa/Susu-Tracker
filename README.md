@@ -8,7 +8,7 @@ My family runs a susu where every member contributes a fixed amount per slot eac
 
 Every payment already generates a confirmation SMS on the collector's phone, so I built an app that reads those messages, records who paid, and does the chasing automatically. My mom also manages a susu with her friends, and the same app now tracks that group too, which pushed me to support multiple groups with different amounts per slot.
 
-#What it does
+# What it does
 
 -Detects payments automatically by reading incoming MoMo confirmation SMS on the collector's phone
 -Logs who has paid and matches each payment to a member and their number of slots
@@ -18,7 +18,7 @@ Every payment already generates a confirmation SMS on the collector's phone, so 
 -Manual override for cash payments or messages that couldn't be read
 -Multiple groups, each with its own members, slot amount, and schedule
 
-#How it works
+# How it works
 
 MoMo SMS arrives on collector's phone
         |
@@ -36,7 +36,7 @@ Match phone number to member -> save payment (Supabase / Postgres)
         v
 Scheduled job: members with no payment today -> reminder SMS
 
-#Design decisions
+# Design decisions
 
 -Idempotent logging: the transaction ID is unique, so the same SMS delivered twice never double-counts a payment.
 Raw SMS stored with every payment, so parsing bugs can be fixed and past messages re-processed.
@@ -45,7 +45,7 @@ Raw SMS stored with every payment, so parsing bugs can be fixed and past message
 -Payments are records, not flags: "paid or pending" is derived from the payment history, so corrections leave an audit trail.
 -Offline-first: payments are saved on the device first and synced when there is a connection.
 
-#Tech stack
+# Tech stack
 
 Area	Tools
 -App	React Native (Expo), TypeScript
