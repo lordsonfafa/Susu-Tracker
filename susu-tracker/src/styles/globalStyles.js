@@ -41,7 +41,7 @@ export const a = StyleSheet.create({
     fontSize: fontSize.xxl,
     color: colors.textPrimary,
     letterSpacing: 0.5,
-    fontWeight: 800,
+    fontWeight: 600,
   },
   text: {
     fontSize: fontSize.base,
@@ -54,6 +54,7 @@ export const a = StyleSheet.create({
   textSemibold: {
     fontSize: fontSize.base,
     color: colors.textPrimary,
+    fontWeight: 400,
   },
   muted: {
     fontSize: fontSize.sm,
@@ -116,8 +117,16 @@ export const a = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: "uppercase",
   },
-  btnLabelPrimary: { color: colors.textOnDark },
-  btnLabelOutline: { color: colors.navy },
+  btnLabelPrimary: {
+    color: colors.textOnDark,
+    fontSize: fontSize.base,
+    fontWeight: 500,
+  },
+  btnLabelOutline: {
+    color: colors.navy,
+    fontSize: fontSize.base,
+    fontWeight: 500,
+  },
 
   // ---------- Inputs ----------
   input: {
@@ -192,6 +201,7 @@ export const a = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.bgTrack,
     overflow: "hidden",
+    marginVertical: 10,
   },
   progressTrackDark: { backgroundColor: "rgba(255,255,255,0.16)" },
   progressFill: { height: 8, borderRadius: 4, backgroundColor: colors.gold },

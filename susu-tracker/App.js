@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import supabase from "./src/lib/supabase";
 import LoginScreen from "./src/app/login";
 import Tabs from "./src/navigation/Tabs";
+import { GroupProvider } from "./src/context/GroupContext";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -39,9 +40,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       {session ? (
-        <NavigationContainer>
-          <Tabs />
-        </NavigationContainer>
+        <GroupProvider>
+          <NavigationContainer>
+            <Tabs />
+          </NavigationContainer>
+        </GroupProvider>
       ) : (
         <LoginScreen />
       )}
