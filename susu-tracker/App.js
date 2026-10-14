@@ -1,50 +1,50 @@
-// import { StatusBar } from 'expo-status-bar';
-// import { StyleSheet, Text, View } from 'react-native';
-
-// export default function App() {
-//   return (
-//     <View style={styles.container}>
-//       <Text>Open up App.js to start working on your app!</Text>
-//       <StatusBar style="auto" />
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//   },
-// });
-
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
 import supabase from "./src/lib/supabase";
+import LoginScreen from "./src/app/login";
+import Tabs from "./src/navigation/Tabs";
 
 export default function App() {
-  const [message, setMessage] = useState("Connecting...");
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    async function test() {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: process.env.EXPO_PUBLIC_TEST_EMAIL,
-        password: process.env.EXPO_PUBLIC_TEST_PASSWORD,
-      });
-      if (signInError)
-        return setMessage("Sign-in failed: " + signInError.message);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => setSession(null))
+      .finally(() => setChecking(false));
 
-      const { data, error } = await supabase.from("groups").select("*");
-      if (error) return setMessage("Query failed: " + error.message);
-      setMessage("Groups found: " + data.length);
-    }
-    test();
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+      },
+    );
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
+  if (checking) {
+    return (
+      <SafeAreaProvider>
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <ActivityIndicator />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>{message}</Text>
-    </View>
+    <SafeAreaProvider>
+      {session ? (
+        <NavigationContainer>
+          <Tabs />
+        </NavigationContainer>
+      ) : (
+        <LoginScreen />
+      )}
+    </SafeAreaProvider>
   );
 }
