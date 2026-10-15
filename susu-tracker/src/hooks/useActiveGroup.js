@@ -10,7 +10,7 @@ export default function useActiveGroup() {
     const load = async () => {
       const { data, error: queryError } = await supabase
         .from("groups")
-        .select("id, slot_amount")
+        .select("*")
         .order("time_created", { ascending: true })
         .limit(1)
         .maybeSingle();

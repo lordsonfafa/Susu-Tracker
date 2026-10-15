@@ -14,9 +14,17 @@ import Buttons from "../components/buttons";
 import { computeStats } from "../lib/susuStats";
 import useActiveGroup from "../hooks/useActiveGroup";
 import ListCards from "../components/listcards";
+import useTodayMembers from "../hooks/useTodayMembers";
+import { isPaid } from "../utils/isPaid";
 
 export default function Home() {
   const { group, loading, error: groupError } = useActiveGroup();
+  const {
+    members,
+    loading: membersLoading,
+    error: membersError,
+  } = useTodayMembers(group?.id);
+  const unpaid = members.filter((m) => !isPaid(m));
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState("");
 
@@ -150,8 +158,23 @@ export default function Home() {
 
         <Buttons />
 
-        <Text style={a.sectionTitle}>Still to pay</Text>
-        <ListCards groupId={group.id} slotAmount={group.slot_amount} />
+        <Text style={a.title}>STILL TO PAY</Text>
+        {/* <Text style={a.sectionTitle}>Still to pay</Text> */}
+        {membersLoading ? (
+          <ActivityIndicator color={colors.navy} />
+        ) : membersError ? (
+          <Text style={[a.muted, a.unpaidText]}>{membersError}</Text>
+        ) : (
+          <ListCards
+            members={unpaid}
+            slotAmount={group.slot_amount}
+            emptyText={
+              members.length === 0
+                ? "No members in this group yet."
+                : "Everyone has paid today."
+            }
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
