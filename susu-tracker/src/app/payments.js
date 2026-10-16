@@ -15,6 +15,7 @@ import { colors, radius } from "../styles/theme";
 import useActiveGroup from "../hooks/useActiveGroup";
 import useRecentPayments from "../hooks/useRecentPayments";
 import { getInitials } from "../utils/initials";
+import { getNextUnpaidDay } from "../lib/days";
 
 const MONTHS = [
   "Jan",
@@ -85,11 +86,21 @@ export default function PaymentsScreen() {
   const dayPayments = matched.filter((p) => p.date_received === selectedDate);
 
   //resolving the flag status with a function
-  const resolveFlagged = async (paymentId, newStatus) => {
+  const resolveFlagged = async (payment, newStatus) => {
+    let changes = { status: newStatus };
+
+    if (newStatus === "matched") {
+      const { day, error: dayError } = await getNextUnpaidDay(
+        payment.member_id,
+      );
+      if (dayError) return dayError;
+      changes = { status: "matched", day_number: day };
+    }
+
     const { error: err } = await supabase
       .from("payments")
-      .update({ status: newStatus })
-      .eq("id", paymentId);
+      .update(changes)
+      .eq("id", payment.id);
     return err;
   };
 
@@ -99,7 +110,7 @@ export default function PaymentsScreen() {
   const handleResolve = (payment, newStatus) => {
     const run = async () => {
       setResolvingId(payment.id);
-      const err = await resolveFlagged(payment.id, newStatus);
+      const err = await resolveFlagged(p, newStatus);
       if (err) Alert.alert("Could not update payment", err.message);
       else await reload();
       setResolvingId(null);

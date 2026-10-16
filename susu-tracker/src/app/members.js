@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -13,7 +13,7 @@ import Svg, { Circle, Path } from "react-native-svg";
 import a from "../styles/globalStyles";
 import { colors } from "../styles/theme";
 import useActiveGroup from "../hooks/useActiveGroup";
-import useTodayMembers from "../hooks/useTodayMembers";
+import useSusuStats from "../hooks/useSusuStats";
 import { isPaid } from "../utils/isPaid";
 import ListCards from "../components/listcards";
 
@@ -38,9 +38,12 @@ const Icon = ({ children, color }) => (
   </Svg>
 );
 
-export default function MembersScreen() {
+export default function MembersScreen({ navigation }) {
   const { group, loading: groupLoading, error: groupError } = useActiveGroup();
-  const { members, loading, error, reload } = useTodayMembers(group?.id);
+  // const { members, loading, error, reload } = useTodayMembers(group?.id);
+
+  const { members, stats, loading, error, reload } = useSusuStats(group);
+  const day = stats?.currentDay;
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -51,6 +54,12 @@ export default function MembersScreen() {
     setRefreshing(false);
   };
 
+  //reloading the screen after visiting add member screen
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", reload);
+    return unsubscribe;
+  }, [navigation, reload]);
+
   //deciding which data to show based on the tab chosen
   let visible;
   if (tab === "all") {
@@ -60,23 +69,25 @@ export default function MembersScreen() {
   } else if (tab === "paid") {
     visible = members.filter(
       (m) =>
-        isPaid(m) && m.name.toLowerCase().includes(query.trim().toLowerCase()),
+        isPaid(m, day) &&
+        m.name.toLowerCase().includes(query.trim().toLowerCase()),
     );
   } else {
     visible = members.filter(
       (m) =>
-        !isPaid(m) && m.name.toLowerCase().includes(query.trim().toLowerCase()),
+        !isPaid(m, day) &&
+        m.name.toLowerCase().includes(query.trim().toLowerCase()),
     );
   }
 
   //updating counts of the different tabs
   const counts = {
     all: members.length,
-    paid: members.filter((m) => isPaid(m)).length,
-    unpaid: members.filter((m) => !isPaid(m)).length,
+    paid: members.filter((m) => isPaid(m, day)).length,
+    unpaid: members.filter((m) => !isPaid(m, day)).length,
   };
 
-  if (groupLoading || (group && loading)) {
+  if (groupLoading || (group && (loading || !stats))) {
     return (
       <SafeAreaView style={a.screen} edges={["top"]}>
         <ActivityIndicator style={{ flex: 1 }} color={colors.navy} />
@@ -128,7 +139,7 @@ export default function MembersScreen() {
           <Text style={a.headerTitle}>Members</Text>
           <TouchableOpacity
             style={{ width: 40, alignItems: "flex-end" }}
-            onPress={() => {}}
+            onPress={() => navigation.navigate("AddMember")}
           >
             <Icon color={colors.navy}>
               <Path d="M12 5v14M5 12h14" />
@@ -173,11 +184,15 @@ export default function MembersScreen() {
 
         <ListCards
           members={visible}
+          currentDay={day}
           slotAmount={group.slot_amount}
           emptyText={
             members.length === 0
               ? "No members in this group yet."
               : "No members match your search."
+          }
+          onPressMember={(m) =>
+            navigation.navigate("MemberDetail", { memberId: m.id })
           }
         />
       </ScrollView>

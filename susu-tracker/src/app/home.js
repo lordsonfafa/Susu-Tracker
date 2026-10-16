@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -9,75 +8,51 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import a from "../styles/globalStyles";
 import { colors, fonts } from "../styles/theme";
-import supabase from "../lib/supabase";
 import Buttons from "../components/buttons";
-import { computeStats } from "../lib/susuStats";
 import useActiveGroup from "../hooks/useActiveGroup";
+import useSusuStats from "../hooks/useSusuStats";
 import ListCards from "../components/listcards";
-import useTodayMembers from "../hooks/useTodayMembers";
 import { isPaid } from "../utils/isPaid";
 
 export default function Home() {
-  const { group, loading, error: groupError } = useActiveGroup();
-  const {
-    members,
-    loading: membersLoading,
-    error: membersError,
-  } = useTodayMembers(group?.id);
-  const unpaid = members.filter((m) => !isPaid(m));
-  const [stats, setStats] = useState(null);
-  const [statsError, setStatsError] = useState("");
+  const { group, loading: groupLoading, error: groupError } = useActiveGroup();
+  const { members, stats, loading, error, reload } = useSusuStats(group);
 
-  const loadStats = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("members")
-      .select("id, slots, payments(amount, status, date_received)")
-      .eq("group_id", group.id);
-
-    if (error) {
-      setStatsError(error.message);
-      return;
-    }
-
-    const today = new Date().toISOString().slice(0, 10);
-    setStats(computeStats(data, group, today));
-    setStatsError("");
-  }, [group]);
-
-  useEffect(() => {
-    if (!group) return;
-
-    loadStats();
-
-    // refresh the summary whenever a payment is added or changed
-    const channel = supabase
-      .channel(`home-${group.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payments" },
-        () => loadStats(),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [group, loadStats]);
-
-  if (loading)
-    return <ActivityIndicator style={{ flex: 1 }} color={colors.navy} />;
-  if (groupError)
-    return <Text style={[a.muted, a.unpaidText]}>{groupError}</Text>;
-  if (!group) return <Text style={a.muted}>No group yet.</Text>;
-  if (statsError) {
+  if (groupLoading || (group && (loading || (!stats && !error)))) {
     return (
-      <TouchableOpacity onPress={loadStats}>
-        <Text style={[a.muted, a.unpaidText]}>{statsError} Tap to retry.</Text>
-      </TouchableOpacity>
+      <SafeAreaView style={a.screen} edges={["top"]}>
+        <ActivityIndicator style={{ flex: 1 }} color={colors.navy} />
+      </SafeAreaView>
     );
   }
-  if (!stats)
-    return <ActivityIndicator style={{ flex: 1 }} color={colors.navy} />;
+
+  if (groupError || error) {
+    return (
+      <SafeAreaView style={a.screen} edges={["top"]}>
+        <View style={a.body}>
+          <Text style={a.headerTitle}>Home</Text>
+          <TouchableOpacity onPress={reload}>
+            <Text style={[a.muted, a.unpaidText]}>
+              {groupError || error} Tap to retry.
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!group || !stats) {
+    return (
+      <SafeAreaView style={a.screen} edges={["top"]}>
+        <View style={a.body}>
+          <Text style={a.headerTitle}>Home</Text>
+          <Text style={a.muted}>No group yet.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const unpaid = members.filter((m) => !isPaid(m, stats.currentDay));
 
   const pct =
     stats.expectedToday === 0
@@ -158,23 +133,17 @@ export default function Home() {
 
         <Buttons />
 
-        <Text style={a.title}>STILL TO PAY</Text>
-        {/* <Text style={a.sectionTitle}>Still to pay</Text> */}
-        {membersLoading ? (
-          <ActivityIndicator color={colors.navy} />
-        ) : membersError ? (
-          <Text style={[a.muted, a.unpaidText]}>{membersError}</Text>
-        ) : (
-          <ListCards
-            members={unpaid}
-            slotAmount={group.slot_amount}
-            emptyText={
-              members.length === 0
-                ? "No members in this group yet."
-                : "Everyone has paid today."
-            }
-          />
-        )}
+        <Text style={a.sectionTitle}>Still to pay</Text>
+        <ListCards
+          members={unpaid}
+          slotAmount={group.slot_amount}
+          currentDay={stats.currentDay}
+          emptyText={
+            members.length === 0
+              ? "No members in this group yet."
+              : `Everyone has paid Day ${stats.currentDay}.`
+          }
+        />
       </ScrollView>
     </SafeAreaView>
   );

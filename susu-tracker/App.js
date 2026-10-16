@@ -6,6 +6,7 @@ import supabase from "./src/lib/supabase";
 import LoginScreen from "./src/app/login";
 import Tabs from "./src/navigation/Tabs";
 import { GroupProvider } from "./src/context/GroupContext";
+import RootNavigator from "./src/navigation/RootNavigator";
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -42,7 +43,7 @@ export default function App() {
       {session ? (
         <GroupProvider>
           <NavigationContainer>
-            <Tabs />
+            <RootNavigator />
           </NavigationContainer>
         </GroupProvider>
       ) : (

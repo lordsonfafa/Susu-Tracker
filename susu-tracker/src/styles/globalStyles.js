@@ -179,7 +179,7 @@ export const a = StyleSheet.create({
   segmented: {
     flexDirection: "row",
     padding: 4,
-    backgroundColor: colors.bgTrack,
+    backgroundColor: colors.navy,
     borderRadius: radius.md,
   },
   segmentedTab: {
@@ -190,8 +190,8 @@ export const a = StyleSheet.create({
   },
   segmentedTabActive: { backgroundColor: colors.bgSurface },
   segmentedLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 15,
+    color: colors.gold,
   },
   segmentedLabelActive: { color: colors.navy },
 
