@@ -16,6 +16,7 @@ import useActiveGroup from "../hooks/useActiveGroup";
 import useRecentPayments from "../hooks/useRecentPayments";
 import { getInitials } from "../utils/initials";
 import { getNextUnpaidDay } from "../lib/days";
+import MenuButton from "../components/MenuButton";
 
 const MONTHS = [
   "Jan",
@@ -175,7 +176,13 @@ export default function PaymentsScreen() {
           />
         }
       >
-        <Text style={[a.headerTitle, { textAlign: "center" }]}>Payments</Text>
+        <View style={a.rowBetween}>
+          <View style={{ width: 40 }}>
+            <MenuButton />
+          </View>
+          <Text style={[a.headerTitle, { fontWeight: 700 }]}>Payments</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
         {/* Needs review: flagged SMS payments */}
         {flagged.length > 0 && (

@@ -13,6 +13,7 @@ import useActiveGroup from "../hooks/useActiveGroup";
 import useSusuStats from "../hooks/useSusuStats";
 import ListCards from "../components/listcards";
 import { isPaid } from "../utils/isPaid";
+import MenuButton from "../components/MenuButton";
 
 export default function Home() {
   const { group, loading: groupLoading, error: groupError } = useActiveGroup();
@@ -71,7 +72,13 @@ export default function Home() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={a.headerTitle}>Home</Text>
+        <View style={a.rowBetween}>
+          <View style={{ width: 40 }}>
+            <MenuButton />
+          </View>
+          <Text style={[a.headerTitle, { fontWeight: 700 }]}>Home</Text>
+          <View style={{ width: 40 }} />
+        </View>
         <Text style={a.title}>{group.name}</Text>
 
         <View style={[a.cardDark, { gap: 14 }]}>
@@ -133,7 +140,7 @@ export default function Home() {
 
         <Buttons />
 
-        <Text style={a.sectionTitle}>Still to pay</Text>
+        <Text style={a.sectionTitle}>Still To Pay</Text>
         <ListCards
           members={unpaid}
           slotAmount={group.slot_amount}

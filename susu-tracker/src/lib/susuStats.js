@@ -76,6 +76,11 @@ export function computeDayStats(members, group) {
 
   // Clamp currentDay between Day 1 and totalDays
   const currentDay = Math.min(Math.max(1, calculatedDay), totalDays);
+  // NEW: completion-based day from useSusuStats / computeDayStats
+  const paidDay = completedDays + 1;
+
+  // NEW: how many days the group is behind the calendar
+  const daysBehind = Math.max(0, currentDay - paidDay);
 
   const paidCount = members.filter((m) =>
     paidDays.get(m.id).has(currentDay),
@@ -95,8 +100,11 @@ export function computeDayStats(members, group) {
   // unpaid days before the current day, across all members
   let totalArrears = 0;
   members.forEach((m) => {
-    for (let d = 1; d < currentDay; d++) {
-      if (!paidDays.get(m.id).has(d)) totalArrears++;
+    const memberPaidSet = paidDays.get(m.id) || new Set();
+    const joinedDay = m.joined_day ?? 1;
+
+    for (let d = joinedDay; d < currentDay; d++) {
+      if (!memberPaidSet.has(d)) totalArrears++;
     }
   });
 
@@ -108,5 +116,6 @@ export function computeDayStats(members, group) {
     collectedToday,
     expectedToday,
     totalArrears,
+    daysBehind,
   };
 }

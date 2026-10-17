@@ -18,6 +18,7 @@ import useActiveGroup from "../hooks/useActiveGroup";
 import useSusuStats from "../hooks/useSusuStats";
 import usePayouts from "../hooks/usePayouts";
 import { getInitials } from "../utils/initials";
+import MenuButton from "../components/MenuButton";
 
 export default function PayoutsScreen() {
   const { group, loading: groupLoading, error: groupError } = useActiveGroup();
@@ -180,7 +181,13 @@ export default function PayoutsScreen() {
           />
         }
       >
-        <Text style={[a.headerTitle, { textAlign: "center" }]}>Payouts</Text>
+        <View style={a.rowBetween}>
+          <View style={{ width: 40 }}>
+            <MenuButton />
+          </View>
+          <Text style={[a.headerTitle, { fontWeight: 700 }]}>Payouts</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
         {/* Next payout */}
         <View style={[a.cardGold, { gap: 12 }]}>

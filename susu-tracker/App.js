@@ -40,15 +40,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {session ? (
-        <GroupProvider>
-          <NavigationContainer>
+      <NavigationContainer>
+        {session ? (
+          <GroupProvider>
             <RootNavigator />
-          </NavigationContainer>
-        </GroupProvider>
-      ) : (
-        <LoginScreen />
-      )}
+          </GroupProvider>
+        ) : (
+          <Login />
+        )}
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }

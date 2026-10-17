@@ -2,6 +2,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Tabs from "./Tabs";
 import MemberDetailScreen from "../app/memberDetail";
 import AddMemberScreen from "../app/addMember";
+import GroupSettingsScreen from "../app/groupSettings";
+import CreateGroupScreen from "../app/createGroup";
 
 const Stack = createNativeStackNavigator();
 
@@ -11,6 +13,8 @@ export default function RootNavigator() {
       <Stack.Screen name="MainTabs" component={Tabs} />
       <Stack.Screen name="MemberDetail" component={MemberDetailScreen} />
       <Stack.Screen name="AddMember" component={AddMemberScreen} />
+      <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
+      <Stack.Screen name="GroupSettings" component={GroupSettingsScreen} />
     </Stack.Navigator>
   );
 }

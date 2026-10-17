@@ -1,40 +1,62 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getGroups } from "../lib/groups";
 
 const GroupContext = createContext(null);
+const KEY = "activeGroupId";
 
 export function GroupProvider({ children }) {
   const [groups, setGroups] = useState([]);
-  const [group, setGroup] = useState(null);
+  const [activeId, setActiveId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const all = await getGroups();
-        const savedId = await AsyncStorage.getItem("activeGroupId");
-        setGroups(all);
-        setGroup(all.find((g) => g.id === savedId) ?? all[0] ?? null);
-      } catch (e) {
-        console.log("Could not load groups:", e.message);
-      } finally {
-        setLoading(false);
-      }
+  const reload = useCallback(async () => {
+    const { groups: list, error: err } = await getGroups();
+    if (err) {
+      setError(err);
+      setLoading(false);
+      return;
     }
-    load();
+    let saved = null;
+    try {
+      saved = await AsyncStorage.getItem(KEY);
+    } catch {}
+
+    setGroups(list);
+    setError("");
+    setActiveId((prev) => {
+      const wanted = prev ?? saved;
+      const match = list.find((g) => String(g.id) === String(wanted));
+      return match ? match.id : (list[0]?.id ?? null);
+    });
+    setLoading(false);
   }, []);
 
-  async function selectGroup(g) {
-    setGroup(g);
-    await AsyncStorage.setItem("activeGroupId", g.id);
-  }
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const selectGroup = (id) => {
+    setActiveId(id);
+    AsyncStorage.setItem(KEY, String(id)).catch(() => {});
+  };
+
+  const group = groups.find((g) => String(g.id) === String(activeId)) ?? null;
 
   return (
-    <GroupContext.Provider value={{ groups, group, selectGroup, loading }}>
+    <GroupContext.Provider
+      value={{ groups, group, loading, error, reload, selectGroup }}
+    >
       {children}
     </GroupContext.Provider>
   );
 }
 
-export const useGroup = () => useContext(GroupContext);
+export const useGroups = () => useContext(GroupContext);

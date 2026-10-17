@@ -16,6 +16,7 @@ import useActiveGroup from "../hooks/useActiveGroup";
 import useSusuStats from "../hooks/useSusuStats";
 import { isPaid } from "../utils/isPaid";
 import ListCards from "../components/listcards";
+import MenuButton from "../components/MenuButton";
 
 const TABS = [
   { key: "all", label: "All" },
@@ -135,13 +136,15 @@ export default function MembersScreen({ navigation }) {
         }
       >
         <View style={a.rowBetween}>
-          <View style={{ width: 40 }} />
-          <Text style={a.headerTitle}>Members</Text>
+          <View style={{ width: 40 }}>
+            <MenuButton />
+          </View>
+          <Text style={[a.headerTitle, { fontWeight: 700 }]}>Members</Text>
           <TouchableOpacity
             style={{ width: 40, alignItems: "flex-end" }}
             onPress={() => navigation.navigate("AddMember")}
           >
-            <Icon color={colors.navy}>
+            <Icon style={{ width: 30, height: 30 }} color={colors.navy}>
               <Path d="M12 5v14M5 12h14" />
             </Icon>
           </TouchableOpacity>
