@@ -81,12 +81,13 @@ susu-tracker/
 
 ## Database
 
-`src/db/schema.sql` is the initial schema. The running app also expects these additions, which are not in that file yet:
+`src/db/schema.sql` creates everything the app needs on a fresh Supabase project, and has a commented upgrade section at the bottom for databases created from the first version. The key points:
 
-- `members.joined_day` (integer, not null, default 1): the susu day a member joined.
-- `payments.day_number` (integer): which susu day a payment counts for, with a unique index so each member has at most one matched payment per day.
-- `payments.status` values used by the app: `matched`, `flagged`, `ignored`.
-- `payouts` uses `date_paid`, and `members.phone_number` holds the phone number.
+- `members.joined_day`: the susu day a member joined, so late joiners owe the days they missed.
+- `payments.day_number`: which susu day a payment counts for, with a unique index so each member has at most one matched payment per day.
+- `payments.status` is one of `matched`, `flagged` or `ignored`.
+- `groups.start_date` is the calendar date of Day 1, used for the "days behind schedule" note.
+- `payouts.date_paid` and `members.phone_number` are the column names the app reads.
 
 Row Level Security is enabled, but the current policies let any signed-in user read and write everything. Treat the app as an admin tool for trusted users only, and turn off public sign-ups in Supabase (Authentication → Sign In / Providers) so strangers cannot create accounts.
 
