@@ -140,7 +140,7 @@ export default function Home() {
 
         <Buttons />
 
-        <Text style={a.sectionTitle}>Still To Pay</Text>
+        <Text style={a.headerTitle}>Still To Pay</Text>
         <ListCards
           members={unpaid}
           slotAmount={group.slot_amount}
