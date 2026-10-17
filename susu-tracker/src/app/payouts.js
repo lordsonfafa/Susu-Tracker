@@ -48,7 +48,7 @@ export default function PayoutsScreen() {
   const slotsWaiting = totalSlots - slotsPaidOut;
   const complete = totalSlots > 0 && slotsPaidOut >= totalSlots;
   const pot = totalSlots * slotAmount * everyDays; // e.g. 10 slots x 10 x 2 days = 200
-  const nextPayoutDay = (slotsPaidOut + 1) * everyDays; // e.g. 4th payout -> after day 8
+  // const nextPayoutDay = (slotsPaidOut + 1) * everyDays; // e.g. 4th payout -> after day 8
 
   const reloadAll = () => Promise.all([reloadStats(), reloadPayouts()]);
 
@@ -58,9 +58,15 @@ export default function PayoutsScreen() {
     setRefreshing(false);
   };
 
-  const daysLeft = stats ? nextPayoutDay - stats.currentDay : 1;
-  const everyonePaid = stats ? stats.paidCount === members.length : false;
-  const roundDone = daysLeft < 0 || (daysLeft === 0 && everyonePaid);
+  // const daysLeft = stats ? nextPayoutDay - stats.currentDay : 1;
+  // const everyonePaid = stats ? stats.paidCount === members.length : false;
+  // const roundDone = daysLeft < 0 || (daysLeft === 0 && everyonePaid);
+  // const stillOwing = stats ? members.length - stats.paidCount : 0;
+  const nextPayoutDay = stats?.roundEnd ?? everyDays;
+  const roundDone = stats?.payoutReady ?? false;
+  const daysLeft = stats
+    ? Math.max(0, stats.roundEnd - stats.completedDays)
+    : 1;
   const stillOwing = stats ? members.length - stats.paidCount : 0;
 
   // a function that will be used to check number of slots left for each member
@@ -120,8 +126,6 @@ export default function PayoutsScreen() {
     );
   };
 
-  console.log("ERRORS", { groupError, statsError, payoutsError });
-
   if (groupLoading || (group && (statsLoading || payoutsLoading))) {
     return (
       <SafeAreaView style={a.screen} edges={["top"]}>
@@ -154,13 +158,16 @@ export default function PayoutsScreen() {
     );
   }
 
-  const pct = Math.min(100, (stats.currentDay / nextPayoutDay) * 100);
-  const roundText =
-    daysLeft > 0
-      ? `Next Payout in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`
-      : daysLeft === 0
-        ? "Last day of this round"
-        : "Payout is due";
+  const roundStart = (stats.roundNumber - 1) * everyDays;
+  const pct = Math.min(
+    100,
+    Math.max(0, ((stats.completedDays - roundStart) / everyDays) * 100),
+  );
+  const roundText = roundDone
+    ? "Payout is ready"
+    : daysLeft > 0
+      ? `Next payout in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`
+      : "Waiting for payments";
   const slotsPct = totalSlots === 0 ? 0 : (slotsPaidOut / totalSlots) * 100;
 
   return (
@@ -185,7 +192,7 @@ export default function PayoutsScreen() {
           <View style={{ width: 40 }}>
             <MenuButton />
           </View>
-          <Text style={[a.headerTitle, { fontWeight: 700 }]}>Payouts</Text>
+          <Text style={[a.headerTitle, { weight: 700 }]}>Payouts</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -217,9 +224,15 @@ export default function PayoutsScreen() {
               >
                 <View style={[a.progressFill, { width: `${pct}%` }]} />
               </View>
-              <Text style={a.muted}>
-                Day {stats.currentDay} of {nextPayoutDay}
-              </Text>
+              {stats.totalDays > 0 ? (
+                <Text style={[a.pillText, a.pillAutoText]}>
+                  Day {stats.currentDay} of {stats.totalDays}
+                </Text>
+              ) : (
+                <Text style={[a.pillText, a.pillAutoText]}>
+                  Day {stats.totalDays}
+                </Text>
+              )}
             </>
           )}
         </View>
@@ -238,9 +251,9 @@ export default function PayoutsScreen() {
 
         {!complete && !roundDone && (
           <Text style={[a.muted, { textAlign: "center" }]}>
-            {daysLeft > 0
-              ? `Payout opens when everyone has paid Day ${nextPayoutDay}.`
-              : `Waiting for ${stillOwing} member${stillOwing === 1 ? "" : "s"} to pay today.`}
+            {stats.totalArrears > 0
+              ? `${stats.totalArrears} unpaid day${stats.totalArrears === 1 ? "" : "s"} from earlier must be cleared first.`
+              : `Payout opens when everyone has paid Day ${nextPayoutDay}.`}
           </Text>
         )}
 

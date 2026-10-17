@@ -46,7 +46,7 @@ export default function App() {
             <RootNavigator />
           </GroupProvider>
         ) : (
-          <Login />
+          <LoginScreen />
         )}
       </NavigationContainer>
     </SafeAreaProvider>

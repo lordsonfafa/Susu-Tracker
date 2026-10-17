@@ -30,7 +30,7 @@ export function computeStats(members, group, today) {
     currentDay: Math.min(completedDays + 1, totalDays),
   };
 }
-export function computeDayStats(members, group) {
+export function computeDayStats(members, group, payoutCount = 0) {
   const slotAmount = group.slot_amount ?? 0;
   const everyDays = group.payout_every_days ?? 1;
 
@@ -53,34 +53,34 @@ export function computeDayStats(members, group) {
   let completedDays = 0;
   while (completedDays < totalDays) {
     const d = completedDays + 1;
-    const due = members.filter((m) => m.joined_day <= d);
+    const due = members.filter((m) => (m.joined_day ?? 1) <= d);
     if (!due.every((m) => paidDays.get(m.id).has(d))) break;
     completedDays = d;
   }
 
-  //CALCULATING THE CURRENT DATE BY COUNTING THE NUMBER OF DAYS IT HAS BEEN SINCE THE SUSU STARTED
-  // Ensure group has a valid start_date, fallback to today if missing
+  // ---- ROUNDS: one payout row = one finished round ----
+  const roundsPaid = payoutCount;
+  const roundNumber = roundsPaid + 1;
+  const roundEnd = Math.min(roundNumber * everyDays, totalDays); // last day of this round
+  const susuComplete = totalSlots > 0 && roundsPaid >= totalSlots;
+
+  // the day only moves forward inside the current round.
+  // after the round's last day it stays put until the payout is recorded.
+  const currentDay = Math.max(1, Math.min(completedDays + 1, roundEnd || 1));
+
+  // ---- CALENDAR DAY (your code, renamed) ----
   const startDate = group?.start_date ? new Date(group.start_date) : new Date();
   const today = new Date();
-
-  // Set both times to midnight (UTC or local) to ensure accurate calendar day counts
   startDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
-
-  // Calculate elapsed milliseconds and convert to full days
-  const diffInMs = today.getTime() - startDate.getTime();
-  const daysElapsed = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  // Day 1 starts on the start_date itself
-  const calculatedDay = daysElapsed + 1;
-
-  // Clamp currentDay between Day 1 and totalDays
-  const currentDay = Math.min(Math.max(1, calculatedDay), totalDays);
-  // NEW: completion-based day from useSusuStats / computeDayStats
-  const paidDay = completedDays + 1;
-
-  // NEW: how many days the group is behind the calendar
-  const daysBehind = Math.max(0, currentDay - paidDay);
+  const daysElapsed = Math.floor(
+    (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  const calendarDay = Math.min(
+    Math.max(1, daysElapsed + 1),
+    Math.max(1, totalDays),
+  );
+  const daysBehind = Math.max(0, calendarDay - currentDay);
 
   const paidCount = members.filter((m) =>
     paidDays.get(m.id).has(currentDay),
@@ -100,22 +100,33 @@ export function computeDayStats(members, group) {
   // unpaid days before the current day, across all members
   let totalArrears = 0;
   members.forEach((m) => {
-    const memberPaidSet = paidDays.get(m.id) || new Set();
-    const joinedDay = m.joined_day ?? 1;
-
-    for (let d = joinedDay; d < currentDay; d++) {
-      if (!memberPaidSet.has(d)) totalArrears++;
+    const set = paidDays.get(m.id) || new Set();
+    for (let d = 1; d < currentDay; d++) {
+      if (!set.has(d)) totalArrears++;
     }
   });
+
+  // payout opens only when every day of this round is fully paid, arrears included
+  const payoutReady =
+    !susuComplete &&
+    totalSlots > 0 &&
+    completedDays >= roundEnd &&
+    totalArrears === 0;
 
   return {
     completedDays,
     currentDay,
+    calendarDay,
+    daysBehind,
     totalDays,
     paidCount,
     collectedToday,
     expectedToday,
     totalArrears,
-    daysBehind,
+    roundsPaid,
+    roundNumber,
+    roundEnd,
+    payoutReady,
+    susuComplete,
   };
 }

@@ -11,7 +11,7 @@ export default function useMemberDetail(memberId) {
     const { data, error: queryError } = await supabase
       .from("members")
       .select(
-        "id, name, slots, payments(id, amount, status, date_received,day_number), payouts(id, amount, date_paid)",
+        "id, name, slots,phone:phone_number, payments(id, amount, status, date_received,day_number), payouts(id, amount, date_paid)",
       )
       .eq("id", memberId)
       .maybeSingle();

@@ -91,11 +91,10 @@ export default function PaymentsScreen() {
     let changes = { status: newStatus };
 
     if (newStatus === "matched") {
-      const { day, error: dayError } = await getNextUnpaidDay(
-        payment.member_id,
-      );
-      if (dayError) return dayError;
-      changes = { status: "matched", day_number: day };
+      const { day, error: dayErr } = await getNextUnpaidDay(payment.member_id);
+      if (dayErr) return Alert.alert("Error", dayErr);
+      const check = await isDayOpen(group, day);
+      if (!check.open) return Alert.alert("Round is full", check.error);
     }
 
     const { error: err } = await supabase

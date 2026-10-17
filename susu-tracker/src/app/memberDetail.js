@@ -16,9 +16,10 @@ import { getInitials } from "../utils/initials";
 import { Alert } from "react-native"; // add to your react-native import
 import supabase from "../lib/supabase";
 import useSusuStats from "../hooks/useSusuStats";
-import { getNextUnpaidDay } from "../lib/days";
+import { getNextUnpaidDay, isDayOpen } from "../lib/days";
 import { useState } from "react";
 import { isPaid } from "../utils/isPaid"; // named import
+import { receiptText, sendWhatsApp } from "../lib/sms";
 
 const STATUS = {
   matched: { label: "Paid", pill: a.pillPaid, text: a.pillPaidText },
@@ -29,7 +30,12 @@ const STATUS = {
 export default function MemberDetailScreen({ route, navigation }) {
   const { memberId } = route.params;
   const { group, loading: groupLoading } = useActiveGroup();
-  const { member, loading: memberLoading, error } = useMemberDetail(memberId);
+  const {
+    member,
+    loading: memberLoading,
+    error,
+    reload,
+  } = useMemberDetail(memberId);
 
   const { stats, loading: statsLoading } = useSusuStats(group);
   const [recording, setRecording] = useState(false); // add useState to the react import
@@ -73,12 +79,25 @@ export default function MemberDetailScreen({ route, navigation }) {
   const recordPayment = () => {
     const run = async () => {
       setRecording(true);
+
       const { day, error: dayError } = await getNextUnpaidDay(member.id);
       if (dayError) {
-        Alert.alert("Could not record payment", dayError.message);
+        Alert.alert(
+          "Could not record payment",
+          typeof dayError === "string" ? dayError : dayError.message,
+        );
         setRecording(false);
         return;
       }
+
+      // the round must still be open for this day
+      const check = await isDayOpen(group, day);
+      if (!check.open) {
+        Alert.alert("Round is full", check.error);
+        setRecording(false);
+        return;
+      }
+
       const { error: insertError } = await supabase.from("payments").insert({
         member_id: member.id,
         amount: dailyAmount,
@@ -88,8 +107,32 @@ export default function MemberDetailScreen({ route, navigation }) {
         group_id: group.id,
         source: "manual",
       });
-      if (insertError)
+
+      if (insertError) {
         Alert.alert("Could not record payment", insertError.message);
+        setRecording(false);
+        return;
+      }
+
+      reload();
+      Alert.alert("Payment recorded", "Send a receipt to this member?", [
+        { text: "Not now", style: "cancel" },
+        {
+          text: "Send receipt",
+          onPress: () =>
+            sendWhatsApp(
+              member.phone,
+              receiptText({
+                name: member.name,
+                amount: dailyAmount,
+                day,
+                groupName: group.name,
+                daysPaid: day, // simple version; see note below
+                totalDays: stats?.totalDays ?? "",
+              }),
+            ),
+        },
+      ]); // <- use your hook's reload function
       setRecording(false);
     };
 

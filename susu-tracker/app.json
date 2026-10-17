@@ -1,24 +1,31 @@
 {
   "expo": {
-    "name": "susu-tracker",
+    "name": "Susu Tracker",
     "slug": "susu-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B2A41"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.borngreat.susutracker",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+        "backgroundColor": "#1B2A41",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "package": "com.borngreat.susutracker",
+      "versionCode": 1
     }
   }
 }

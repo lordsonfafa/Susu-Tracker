@@ -16,6 +16,7 @@ import a from "../styles/globalStyles";
 import { colors } from "../styles/theme";
 import useActiveGroup from "../hooks/useActiveGroup";
 import useTodayMembers from "../hooks/useTodayMembers";
+import useSusuStats from "../hooks/useSusuStats";
 
 export default function AddMemberScreen({ navigation }) {
   const { group } = useActiveGroup();

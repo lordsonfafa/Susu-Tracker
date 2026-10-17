@@ -70,28 +70,32 @@ export default function useSusuStats(group) {
   const groupId = group?.id;
 
   const reload = useCallback(async () => {
-    // 1. Guard clause: Stop if group or group.id is not available yet
     if (!groupId) return;
 
-    const { data, error: queryError } = await supabase
-      .from("members")
-      .select(
-        "id, name, momo_name, slots, joined_day, payments(id, amount, status, day_number)",
-      )
-      .eq("group_id", groupId)
-      .order("name");
+    const [membersRes, payoutsRes] = await Promise.all([
+      supabase
+        .from("members")
+        .select(
+          "id, name, phone:phone_number, momo_name, slots, joined_day, payments(id, amount, status, day_number)",
+        )
+        .eq("group_id", groupId)
+        .order("name"),
+      supabase.from("payouts").select("id").eq("group_id", groupId),
+    ]);
 
+    const queryError = membersRes.error || payoutsRes.error;
     if (queryError) {
       setError(queryError.message);
     } else {
-      const memberList = data || [];
+      const memberList = membersRes.data || [];
       setMembers(memberList);
-      // 2. Safely calculate stats with fallbacks
-      setStats(computeDayStats(memberList, group));
+      setStats(
+        computeDayStats(memberList, group, (payoutsRes.data || []).length),
+      );
       setError("");
     }
     setLoading(false);
-  }, [groupId, group]); // Depend on primitive groupId to prevent infinite loops
+  }, [groupId, group]);
 
   useEffect(() => {
     // Stop early if no group ID
@@ -110,6 +114,11 @@ export default function useSusuStats(group) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "members" },
+        () => reload(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payouts" },
         () => reload(),
       )
       .subscribe();
