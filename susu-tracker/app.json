@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1B2A41"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.borngreat.susutracker",
@@ -26,6 +21,17 @@
       },
       "package": "com.borngreat.susutracker",
       "versionCode": 1
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#E6F4FE"
+        }
+      ]
+    ]
   }
 }
